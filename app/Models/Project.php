@@ -10,8 +10,12 @@ class Project extends Model
 
     protected $casts = ['due_date' => 'date'];
 
-    public function owner()
+
+    public function owners()
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->belongsToMany(User::class, 'project_user', 'project_id', 'user_id')
+            ->withPivot('role')
+            ->withTimestamps();
     }
+    
 }
