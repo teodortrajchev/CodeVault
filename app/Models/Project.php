@@ -21,11 +21,9 @@ class Project extends Model
         return $this->members()->where('user_id', $user->id)->first()?->pivot->role;
     }
 
-    public function tasks(): BelongsToMany
+    public function tasks()
     {
-        return $this->belongsToMany(Task::class)
-            ->withPivot('role')
-            ->withTimestamps();
+        return $this->hasMany(Task::class);
     }
     public function members()
     {
