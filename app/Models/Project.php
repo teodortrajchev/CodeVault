@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Enums\ProjectRole;
 
 class Project extends Model
@@ -18,6 +19,13 @@ class Project extends Model
         }
 
         return $this->members()->where('user_id', $user->id)->first()?->pivot->role;
+    }
+
+    public function tasks(): BelongsToMany
+    {
+        return $this->belongsToMany(Task::class)
+            ->withPivot('role')
+            ->withTimestamps();
     }
     public function members()
     {
