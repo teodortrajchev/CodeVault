@@ -62,6 +62,17 @@
                 </select>
             </div>
 
+            <div>
+                <label for="priority" class="block text-sm font-medium">Priority</label>
+                <select id="priority" name="priority" class="mt-1 border rounded px-3 py-2">
+                    @foreach (['low' => 'Low', 'medium' => 'Medium', 'high' => 'High'] as $value => $label)
+                        <option value="{{ $value }}" @selected(old('priority', $task->priority) === $value)>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="flex gap-3">
                 <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">
                     Save changes

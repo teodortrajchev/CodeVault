@@ -14,6 +14,7 @@
                 <tr class="text-left border-b">
                     <th class="py-2">Name</th>
                     <th class="py-2">Status</th>
+                    <th class="py-2">Priority</th>
                     <th class="py-2">Assigned to</th>
                     <th class="py-2">Due date</th>
                     <th class="py-2"></th>
@@ -24,6 +25,16 @@
                     <tr class="border-b">
                         <td class="py-2">{{ $task->name }}</td>
                         <td class="py-2">{{ str($task->status)->headline() }}</td>
+                        <td class="py-2">
+                            <span @class([
+                                'px-2 py-0.5 rounded text-xs',
+                                'bg-red-100 text-red-700' => $task->priority === 'high',
+                                'bg-yellow-100 text-yellow-700' => $task->priority === 'medium',
+                                'bg-gray-100 text-gray-700' => $task->priority === 'low',
+                            ])>
+                                {{ str($task->priority ?? 'medium')->headline() }}
+                            </span>
+                        </td>
                         <td class="py-2">{{ $task->assignedUser->name ?? '—' }}</td>
                         <td class="py-2">{{ optional($task->due_date)->format('M j, Y') ?? '—' }}</td>
                         <td class="py-2 text-right">

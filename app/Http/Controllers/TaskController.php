@@ -38,6 +38,7 @@ class TaskController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'due_date' => ['nullable', 'date'],
             'assigned_to' => ['nullable', 'exists:users,id'],
+            'priority' => ['nullable', 'string', 'in:low,medium,high'],
         ]);
 
         $task = Task::create($data + ['project_id' => $project->id,]);
@@ -67,6 +68,7 @@ class TaskController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'due_date' => ['nullable', 'date'],
             'assigned_to' => ['nullable', 'exists:users,id'],
+            'priority' => ['nullable', 'string', 'in:low,medium,high'],
             'status' => ['required', 'string', 'in:todo,in_progress,done'],
         ]);
  
