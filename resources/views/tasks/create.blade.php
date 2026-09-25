@@ -42,6 +42,7 @@
                 <select id="assigned_to" name="assigned_to" class="mt-1 border rounded px-3 py-2">
                     <option value="">Unassigned</option>
                     @foreach ($project->members as $member)
+                        @continue(!\App\Enums\ProjectRole::from($member->pivot->role)->canContribute())
                         <option value="{{ $member->id }}" @selected(old('assigned_to') == $member->id)>
                             {{ $member->name }}
                         </option>

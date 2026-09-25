@@ -12,13 +12,15 @@ class Project extends Model
 
     protected $casts = ['due_date' => 'date'];
 
-    public function roleFor(User $user): ?string
+    public function roleFor(?User $user): ?ProjectRole
     {
-        if ($this->owner_id === $user->id) {
-            return ProjectRole::Owner->value;
+        if (! $user) {
+            return null;
         }
 
-        return $this->members()->where('user_id', $user->id)->first()?->pivot->role;
+        $member = $this->members->firstWhere('id', $user->id);
+
+        return $member ? ProjectRole::from($member->pivot->role) : null;
     }
 
     public function tasks()

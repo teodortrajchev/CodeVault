@@ -20,7 +20,15 @@ enum ProjectRole: string
     {
         return $this !== self::Viewer;
     }
-
+    public function label(): string
+    {
+        return match ($this) {
+            self::Owner => 'Owner',
+            self::Manager => 'Manager',
+            self::Member => 'Member',
+            self::Viewer => 'Viewer',
+        };
+    }
 
 }
 ?>
