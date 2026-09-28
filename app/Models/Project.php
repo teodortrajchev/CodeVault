@@ -14,7 +14,7 @@ class Project extends Model
 
     public function roleFor(?User $user): ?ProjectRole
     {
-        if (! $user) {
+        if (!$user) {
             return null;
         }
 

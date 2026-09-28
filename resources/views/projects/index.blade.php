@@ -1,4 +1,3 @@
-
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
@@ -33,9 +32,26 @@
                         </div>
                     </div>
                 @else
-                    <ul role="list" class="divide-y divide-gray-200">
+                    <div class="flex items-center gap-2 px-4 py-3 sm:px-6 border-b border-gray-200 text-sm text-gray-600">
+                        <label for="project-sort">{{ __('Sort by') }}:</label>
+                        <select id="project-sort" class="text-sm border-gray-300 rounded-md py-1">
+                            <option value="">{{ __('Default') }}</option>
+                            <option value="name:asc">{{ __('Name (A–Z)') }}</option>
+                            <option value="name:desc">{{ __('Name (Z–A)') }}</option>
+                            <option value="due:asc">{{ __('Due date (soonest)') }}</option>
+                            <option value="due:desc">{{ __('Due date (latest)') }}</option>
+                            <option value="status:asc">{{ __('Status') }}</option>
+                            <option value="created:asc">{{ __('Oldest first') }}</option>
+                            <option value="created:desc">{{ __('Newest first') }}</option>
+                        </select>
+                    </div>
+
+                    <ul id="project-list" role="list" class="divide-y divide-gray-200">
                         @foreach ($projects as $project)
-                            <li>
+                            <li data-name="{{ $project->name }}"
+                                data-due="{{ optional($project->due_date)->format('Y-m-d') }}"
+                                data-status="{{ $project->status }}"
+                                data-created="{{ $project->created_at->format('Y-m-d H:i:s') }}">
                                 <a href="{{ route('projects.show', $project) }}" class="block hover:bg-gray-50 transition ease-in-out duration-150">
                                     <div class="px-4 py-4 sm:px-6 flex items-center justify-between">
                                         <div class="min-w-0 flex-1">
@@ -69,6 +85,30 @@
                             </li>
                         @endforeach
                     </ul>
+
+                    <script>
+                        const projectList = document.getElementById('project-list');
+                        const originalOrder = Array.from(projectList.children);
+
+                        document.getElementById('project-sort').addEventListener('change', (e) => {
+                            if (!e.target.value) {
+                                originalOrder.forEach((li) => projectList.appendChild(li));
+                                return;
+                            }
+
+                            const [key, dir] = e.target.value.split(':');
+                            const m = dir === 'asc' ? 1 : -1;
+
+                            Array.from(projectList.children)
+                                .sort((a, b) => {
+                                    const av = a.dataset[key] || '';
+                                    const bv = b.dataset[key] || '';
+                                    if (!av || !bv) return !av - !bv; // empty values go last
+                                    return av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' }) * m;
+                                })
+                                .forEach((li) => projectList.appendChild(li));
+                        });
+                    </script>
                 @endif
             </div>
         </div>

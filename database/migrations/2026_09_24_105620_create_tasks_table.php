@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
+            $table->enum('status', ['todo', 'in_progress', 'completed'])->default('todo');
             $table->date('due_date')->nullable();
             $table->timestamps();
         });

@@ -55,7 +55,7 @@
             <div>
                 <label for="status" class="block text-sm font-medium">Status</label>
                 <select id="status" name="status" class="mt-1 border rounded px-3 py-2">
-                    @foreach (['todo' => 'To do', 'in_progress' => 'In progress', 'done' => 'Done'] as $value => $label)
+                    @foreach (['todo' => 'To do', 'in_progress' => 'In progress', 'completed' => 'Completed'] as $value => $label)
                         <option value="{{ $value }}" @selected(old('status', $task->status) === $value)>
                             {{ $label }}
                         </option>

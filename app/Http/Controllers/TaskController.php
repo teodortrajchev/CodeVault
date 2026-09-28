@@ -59,6 +59,18 @@ class TaskController extends Controller
         return view('tasks.edit', compact('project', 'task'));
     }
 
+    public function complete(Request $request, Project $project, Task $task)
+    {
+        abort_unless($project->roleFor($request->user())?->canContribute(), 403);
+        abort_unless($task->project_id === $project->id, 404);
+
+        $task->update(['status' => 'completed']);
+
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('status', 'Task marked as finished.');
+    }
+
     public function update(Request $request, Project $project, Task $task)
     {
         abort_unless($project->roleFor($request->user())?->canContribute(), 403);
@@ -69,7 +81,7 @@ class TaskController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'due_date' => ['nullable', 'date'],
             'assigned_to' => ['nullable', 'exists:users,id'],
-            'status' => ['required', 'string', 'in:todo,in_progress,done'],
+            'status' => ['required', 'string', 'in:todo,pending,in_progress,completed'],
             'priority' => ['nullable', 'string', 'in:low,medium,high'],
         ]);
 

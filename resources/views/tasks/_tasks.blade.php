@@ -1,50 +1,52 @@
-<div class="mt-8">
-    <div class="flex items-center justify-between mb-3">
+@php
+    $canContribute = $project->roleFor(auth()->user())?->canContribute();
+
+    // partition() returns [matching, non-matching]
+    [$doneTasks, $openTasks] = $project->tasks->partition(
+        fn ($t) => in_array($t->status, ['completed', 'done'])
+    );
+@endphp
+
+<div>
+    <div class="flex items-center justify-between mb-6">
         <h2 class="text-lg font-semibold">Tasks</h2>
         <a href="{{ route('projects.tasks.create', $project) }}" class="text-sm text-blue-600">
             + New task
         </a>
     </div>
 
-    @if ($project->tasks->isEmpty())
-        <p class="text-sm text-gray-500">No tasks yet.</p>
-    @else
-        <table class="w-full text-sm border-collapse">
-            <thead>
-                <tr class="text-left border-b">
-                    <th class="py-2">Name</th>
-                    <th class="py-2">Status</th>
-                    <th class="py-2">Priority</th>
-                    <th class="py-2">Assigned to</th>
-                    <th class="py-2">Due date</th>
-                    <th class="py-2"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($project->tasks as $task)
-                    <tr class="border-b">
-                        <td class="py-2">{{ $task->name }}</td>
-                        <td class="py-2">{{ str($task->status)->headline() }}</td>
-                        <td class="py-2">
-                            <span @class([
-                                'px-2 py-0.5 rounded text-xs',
-                                'bg-red-100 text-red-700' => $task->priority === 'high',
-                                'bg-yellow-100 text-yellow-700' => $task->priority === 'medium',
-                                'bg-gray-100 text-gray-700' => $task->priority === 'low',
-                            ])>
-                                {{ str($task->priority ?? 'medium')->headline() }}
-                            </span>
-                        </td>
-                        <td class="py-2">{{ $task->assignedUser->name ?? '—' }}</td>
-                        <td class="py-2">{{ optional($task->due_date)->format('M j, Y') ?? '—' }}</td>
-                        <td class="py-2 text-right">
-                            <a href="{{ route('projects.tasks.edit', [$project, $task]) }}" class="text-blue-600">
-                                Edit
-                            </a>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
+    <h3 class="text-sm font-medium text-gray-900 mb-2">
+        To do <span class="text-gray-400">({{ $openTasks->count() }})</span>
+    </h3>
+    @include('tasks._table_tasks', [
+        'tasks' => $openTasks,
+        'project' => $project,
+        'showStatus' => true,
+        'showComplete' => true,
+        'canContribute' => $canContribute,
+        'emptyMessage' => 'Nothing left to do.',
+    ])
+
+    <h3 class="text-sm font-medium text-gray-900 mt-8 mb-2">
+        Completed <span class="text-gray-400">({{ $doneTasks->count() }})</span>
+    </h3>
+    @include('tasks._table_tasks', [
+        'tasks' => $doneTasks,
+        'project' => $project,
+        'showStatus' => false,
+        'showComplete' => false,
+        'canContribute' => $canContribute,
+        'emptyMessage' => 'No completed tasks yet.',
+    ])
 </div>
+
+<style>
+    table[data-sortable] th { cursor: pointer; user-select: none; }
+    table[data-sortable] th[data-sort-method="none"] { cursor: default; }
+    table[data-sortable] th[aria-sort="ascending"]::after { content: " ▲"; }
+    table[data-sortable] th[aria-sort="descending"]::after { content: " ▼"; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tablesort@5.3.0/dist/tablesort.min.js"></script>
+<script>
+    document.querySelectorAll('table[data-sortable]').forEach((t) => new Tablesort(t));
+</script>
