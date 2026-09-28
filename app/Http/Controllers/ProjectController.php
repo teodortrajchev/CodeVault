@@ -42,12 +42,16 @@ class ProjectController extends Controller
     }
 
     public function show(Request $request, Project $project)
-    {
-        abort_unless($project->roleFor($request->user()), 403);
+{
+    abort_unless($project->roleFor($request->user()), 403);
 
-        $project->load('members');
+    $project->load('members');
 
-        return view('projects.show', compact('project'));
-    }
+    $invitations = $project->roleFor($request->user())->canManage()
+        ? $project->invitations()->pending()->latest()->get()
+        : collect();
+
+    return view('projects.show', compact('project', 'invitations'));
+}
 }
 ?>

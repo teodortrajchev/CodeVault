@@ -56,26 +56,135 @@
                 </div>
             </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-sm font-medium text-gray-900 mb-4">{{ __('Members') }}</h3>
+            @php
+    $actorRole = $project->roleFor(auth()->user());
+    $canManage = $actorRole?->canManage() ?? false;
+    $isOwner = $actorRole === \App\Enums\ProjectRole::Owner;
+    $roleOptions = ['owner' => 'Owner', 'manager' => 'Manager', 'member' => 'Member', 'viewer' => 'Viewer'];
+    $invitations = $invitations ?? collect();
+    $inviteHasErrors = $errors->has('email') || $errors->has('role');
+@endphp
 
-                    <ul role="list" class="divide-y divide-gray-200">
-                        @foreach ($project->members as $member)
-                            <li class="py-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ $member->name }}</p>
-                                    <p class="text-sm text-gray-500">{{ $member->email }}</p>
-                                </div>
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="p-6" x-data="{ open: {{ $inviteHasErrors ? 'true' : 'false' }} }">
 
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 capitalize">
-                                    {{ $member->pivot->role }}
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-900">{{ __('Members') }}</h3>
+
+            @if ($canManage)
+                <button type="button"
+                        @click="open = !open"
+                        class="inline-flex items-center px-3 py-1.5 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 transition ease-in-out duration-150">
+                    <span x-show="!open">+ {{ __('Invite collaborator') }}</span>
+                    <span x-show="open" x-cloak>{{ __('Cancel') }}</span>
+                </button>
+            @endif
+        </div>
+
+        @if ($canManage)
+            <form x-show="open"
+                  x-cloak
+                  x-transition
+                  method="POST"
+                  action="{{ route('projects.invitations.store', $project) }}"
+                  class="mb-6 p-4 bg-gray-50 rounded-md border border-gray-200">
+                @csrf
+
+                <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                    <div class="flex-1">
+                        <label for="invite-email" class="block text-sm font-medium text-gray-700">
+                            {{ __('Email address') }}
+                        </label>
+                        <input type="email"
+                               id="invite-email"
+                               name="email"
+                               value="{{ old('email') }}"
+                               placeholder="name@example.com"
+                               required
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        @error('email')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="invite-role" class="block text-sm font-medium text-gray-700">
+                            {{ __('Role') }}
+                        </label>
+                        <select id="invite-role"
+                                name="role"
+                                class="mt-1 block border-gray-300 rounded-md shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            @foreach ($roleOptions as $value => $label)
+                                @if ($value !== 'owner' || $isOwner)
+                                    <option value="{{ $value }}" @selected(old('role', 'member') === $value)>
+                                        {{ $label }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                        @error('role')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <x-primary-button>{{ __('Send invite') }}</x-primary-button>
                 </div>
-            </div>
+
+                <p class="mt-3 text-xs text-gray-500">
+                    {{ __('They will get an email with a link that expires in 7 days.') }}
+                </p>
+            </form>
+        @endif
+
+        <ul role="list" class="divide-y divide-gray-200">
+            @foreach ($project->members as $member)
+                <li class="py-3 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ $member->name }}</p>
+                        <p class="text-sm text-gray-500">{{ $member->email }}</p>
+                    </div>
+
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 capitalize">
+                        {{ $member->pivot->role }}
+                    </span>
+                </li>
+            @endforeach
+        </ul>
+
+        @if ($canManage && $invitations->isNotEmpty())
+            <h4 class="text-sm font-medium text-gray-900 mt-8 mb-2">{{ __('Pending invitations') }}</h4>
+
+            <ul role="list" class="divide-y divide-gray-200">
+                @foreach ($invitations as $invitation)
+                    <li class="py-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ $invitation->email }}</p>
+                            <p class="text-sm text-gray-500">
+                                {{ __('Expires') }} {{ $invitation->expires_at->format('M j, Y') }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 capitalize">
+                                {{ $invitation->role }}
+                            </span>
+
+                            <form method="POST"
+                                  action="{{ route('projects.invitations.destroy', [$project, $invitation]) }}"
+                                  onsubmit="return confirm('Revoke this invitation?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-sm text-red-600 hover:text-red-800">
+                                    {{ __('Revoke') }}
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
+</div>
         </div>
     </div>
 </x-app-layout>
