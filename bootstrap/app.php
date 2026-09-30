@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
+    ->withMiddleware(function (Middleware $middleware): void {
+    $middleware->web(append: [
+        \App\Http\Middleware\SendDueRemindersDayBefore::class,
+    ]);
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+

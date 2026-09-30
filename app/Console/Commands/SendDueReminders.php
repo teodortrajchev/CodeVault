@@ -21,9 +21,8 @@ class SendDueReminders extends Command
     public function handle(): int
     {
         $stages = [
-            ['column' => 'due_soon_notified_at', 'date' => today()->addDay(), 'days' => 1],
-            ['column' => 'due_today_notified_at', 'date' => today(), 'days' => 0],
-        ];
+        ['column' => 'due_soon_notified_at', 'date' => today()->addDay(), 'days' => 1],
+    ];
 
         $sent = 0;
 
