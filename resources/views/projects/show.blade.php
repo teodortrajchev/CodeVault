@@ -60,6 +60,7 @@
     $actorRole = $project->roleFor(auth()->user());
     $canManage = $actorRole?->canManage() ?? false;
     $isOwner = $actorRole === \App\Enums\ProjectRole::Owner;
+    $canChangeRoles = $actorRole?->canChangeRoles() ?? false;
     $roleOptions = ['owner' => 'Owner', 'manager' => 'Manager', 'member' => 'Member', 'viewer' => 'Viewer'];
     $invitations = $invitations ?? collect();
     $inviteHasErrors = $errors->has('email') || $errors->has('role');
@@ -136,6 +137,12 @@
             </form>
         @endif
 
+        @if ($errors->roleUpdate->any())
+        <div class="mb-4 px-4 py-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-700">
+            {{ $errors->roleUpdate->first() }}
+        </div>
+        @endif
+
         <ul role="list" class="divide-y divide-gray-200">
             @foreach ($project->members as $member)
                 <li class="py-3 flex items-center justify-between">
@@ -144,9 +151,23 @@
                         <p class="text-sm text-gray-500">{{ $member->email }}</p>
                     </div>
 
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 capitalize">
-                        {{ $member->pivot->role }}
-                    </span>
+                    @if ($canChangeRoles && $member->id !== auth()->id())
+                        <form method="POST" action="{{ route('projects.members.update', [$project, $member]) }}">
+                        @csrf
+                        @method('PUT')
+                        <label for="role-{{ $member->id }}" class="sr-only">{{ __('Role for :name', ['name' => $member->name]) }}</label>
+                        <select id="role-{{ $member->id }}" name="role"  onchange="this.form.submit()" class="border-gray-300 rounded-md shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            @foreach ($roleOptions as $value => $label)
+                                <option value="{{ $value }}" @selected($member->pivot->role === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <noscript><button type="submit" class="text-sm text-indigo-600">{{ __('Save') }}</button></noscript>
+                        </form>
+                   @else
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 capitalize">
+                            {{ $member->pivot->role }}
+                        </span>
+                    @endif
                 </li>
             @endforeach
         </ul>

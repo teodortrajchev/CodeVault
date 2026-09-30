@@ -29,6 +29,9 @@ enum ProjectRole: string
             self::Viewer => 'Viewer',
         };
     }
-
+    public function canChangeRoles(): bool
+    {
+        return $this === self::Owner;
+    }
 }
 ?>
