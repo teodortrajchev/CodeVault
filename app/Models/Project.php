@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Enums\ProjectRole;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use App\Enums\ProjectRole;
+use App\Notifications\HasDueReminders;
 
 class Project extends Model
 {
+    use HasDueReminders;
+
+    
+
     protected $fillable = ['owner_id', 'name', 'description', 'status', 'due_date'];
 
     protected $casts = ['due_date' => 'date'];
@@ -27,15 +32,16 @@ class Project extends Model
     {
         return $this->hasMany(Task::class);
     }
-       public function invitations()
-   {
-       return $this->hasMany(ProjectInvitation::class);
-   }
+
+    public function invitations()
+    {
+        return $this->hasMany(ProjectInvitation::class);
+    }
+
     public function members()
     {
         return $this->belongsToMany(User::class, 'project_user', 'project_id', 'user_id')
             ->withPivot('role')
             ->withTimestamps();
     }
-    
 }

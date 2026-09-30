@@ -33,5 +33,10 @@ enum ProjectRole: string
     {
         return $this === self::Owner;
     }
+
+    public function canAssignTasks(): bool
+    {
+        return $this === self::Owner || $this === self::Manager;
+    }
 }
 ?>
