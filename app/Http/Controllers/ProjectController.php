@@ -45,8 +45,7 @@ class ProjectController extends Controller
 {
     abort_unless($project->roleFor($request->user()), 403);
 
-    $project->load('members');
-
+    $project->load('members', 'tasks.assignees');
     $invitations = $project->roleFor($request->user())->canManage()
         ? $project->invitations()->pending()->latest()->get()
         : collect();

@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use App\Notifications\HasDueReminders;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Notifications\HasDueReminders;
+
 class Task extends Model
 {
     use HasFactory, HasDueReminders;
@@ -13,7 +14,6 @@ class Task extends Model
         'name',
         'description',
         'project_id',
-        'assigned_to',
         'status',
         'priority',
         'due_date',
@@ -28,15 +28,12 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function assignedUser()
+    public function assignees()
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsToMany(User::class, 'task_user')->withTimestamps();
     }
-    protected function reminderTriggers(): array
-    {
-        return ['due_date', 'assigned_to'];
-    }
-     public function messages()
+
+    public function messages()
     {
         return $this->hasMany(Message::class);
     }

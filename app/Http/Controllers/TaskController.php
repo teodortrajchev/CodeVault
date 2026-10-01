@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProjectRole;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
-    
     public function index(Request $request)
     {
         $projectIds = $request->user()->projects()->pluck('projects.id');
@@ -20,7 +22,6 @@ class TaskController extends Controller
         return view('tasks.index', compact('tasks'));
     }
 
-    
     public function create(Request $request, Project $project)
     {
         abort_unless($project->roleFor($request->user())?->canContribute(), 403);
@@ -28,7 +29,6 @@ class TaskController extends Controller
         return view('tasks.create', compact('project'));
     }
 
-    
     public function store(Request $request, Project $project)
     {
         abort_unless($project->roleFor($request->user())?->canContribute(), 403);
@@ -37,24 +37,36 @@ class TaskController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'due_date' => ['nullable', 'date'],
-            'assigned_to' => ['nullable', 'exists:users,id'],
             'priority' => ['nullable', 'string', 'in:low,medium,high'],
-        ]);
+        ] + $this->assigneeRules($project));
 
-        $task = Task::create($data + [
-            'project_id' => $project->id,
-        ]);
+        $assignees = Arr::pull($data, 'assignees', []);
+
+        $task = Task::create($data + ['project_id' => $project->id]);
+
+        $this->syncAssignees($request, $project, $task, $assignees);
 
         return redirect()
             ->route('projects.show', $project)
             ->with('status', 'Task created.');
     }
 
-  
+    public function show(Request $request, Project $project, Task $task)
+    {
+        abort_unless($project->roleFor($request->user()), 403);
+        abort_unless($task->project_id === $project->id, 404);
+
+        $task->load('assignees');
+
+        return view('tasks.show', compact('project', 'task'));
+    }
+
     public function edit(Request $request, Project $project, Task $task)
     {
         abort_unless($project->roleFor($request->user())?->canContribute(), 403);
         abort_unless($task->project_id === $project->id, 404);
+
+        $task->load('assignees');
 
         return view('tasks.edit', compact('project', 'task'));
     }
@@ -80,12 +92,15 @@ class TaskController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'due_date' => ['nullable', 'date'],
-            'assigned_to' => ['nullable', 'exists:users,id'],
             'status' => ['required', 'string', 'in:todo,pending,in_progress,completed'],
             'priority' => ['nullable', 'string', 'in:low,medium,high'],
-        ]);
+        ] + $this->assigneeRules($project));
+
+        $assignees = Arr::pull($data, 'assignees', []);
 
         $task->update($data);
+
+        $this->syncAssignees($request, $project, $task, $assignees);
 
         return redirect()
             ->route('projects.show', $project)
@@ -104,14 +119,37 @@ class TaskController extends Controller
             ->with('status', 'Task deleted.');
     }
 
- 
-        public function show(Request $request, Project $project, Task $task)
+    /** Assignees must be non-viewer members of this project. */
+    private function assigneeRules(Project $project): array
     {
-        abort_unless($project->roleFor($request->user()), 403);
-        abort_unless($task->project_id === $project->id, 404);
+        return [
+            'assignees' => ['nullable', 'array'],
+            'assignees.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('project_user', 'user_id')->where(
+                    fn ($q) => $q->where('project_id', $project->id)
+                        ->where('role', '!=', ProjectRole::Viewer->value)
+                ),
+            ],
+        ];
+    }
 
-        $task->load('assignedUser');
+    /** Only owners and managers can change who a task is assigned to. */
+    private function syncAssignees(Request $request, Project $project, Task $task, array $ids): void
+    {
+        if (! $project->roleFor($request->user())?->canAssignTasks()) {
+            return;
+        }
 
-        return view('tasks.show', compact('project', 'task'));
+        $changes = $task->assignees()->sync($ids);
+
+        // Newly added people should still get the due reminders.
+        if ($changes['attached']) {
+            $task->forceFill([
+                'due_soon_notified_at' => null,
+                'due_today_notified_at' => null,
+            ])->saveQuietly();
+        }
     }
 }

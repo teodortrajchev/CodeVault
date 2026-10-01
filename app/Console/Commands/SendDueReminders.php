@@ -27,18 +27,17 @@ class SendDueReminders extends Command
         $sent = 0;
 
         foreach ($stages as ['column' => $column, 'date' => $date, 'days' => $days]) {
-            // Tasks: remind the assignee, skip finished tasks.
-            Task::with(['project', 'assignedUser'])
-                ->whereNotNull('assigned_to')
+             // Tasks: remind every assignee, skip finished tasks.
+            Task::with(['project', 'assignees'])
+                ->whereHas('assignees')
                 ->where('status', '!=', 'completed')
                 ->whereDate('due_date', $date)
                 ->whereNull($column)
                 ->eachById(function (Task $task) use ($column, $days, &$sent) {
-                    if ($this->notify($task->assignedUser, new TaskDueNotification($task, $days), $task, $column)) {
+                    if ($this->notify($task->assignees, new TaskDueNotification($task, $days), $task, $column)) {
                         $sent++;
                     }
                 });
-
             // Projects: remind every member of active projects.
             Project::with('members')
                 ->where('status', 'active')

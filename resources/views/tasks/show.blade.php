@@ -47,7 +47,7 @@
                         @endif
 
                         <span class="text-sm text-gray-500">
-                            {{ __('Assigned to') }}: {{ $task->assignedUser->name ?? '—' }}
+                            {{ __('Assigned to') }}: {{ $task->assignees->pluck('name')->join(', ') ?: '—' }}
                         </span>
 
                         @if ($canContribute)

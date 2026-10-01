@@ -39,7 +39,7 @@
                             {{ str($task->priority ?? 'medium')->headline() }}
                         </span>
                     </td>
-                    <td class="py-2">{{ $task->assignedUser->name ?? '—' }}</td>
+                    <td class="py-2">{{ $task->assignees->pluck('name')->join(', ') ?: '—' }}</td>
                     <td class="py-2" data-sort="{{ optional($task->due_date)->format('Y-m-d') }}">
                         {{ optional($task->due_date)->format('M j, Y') ?? '—' }}
                     </td>

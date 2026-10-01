@@ -39,18 +39,22 @@
                        class="mt-1 border rounded px-3 py-2">
             </div>
 
-            <div>
-                <label for="assigned_to" class="block text-sm font-medium">Assign to</label>
-                <select id="assigned_to" name="assigned_to" class="mt-1 border rounded px-3 py-2">
-                    <option value="">Unassigned</option>
-                    @foreach ($project->members as $member)
-                        @continue(!\App\Enums\ProjectRole::from($member->pivot->role)->canContribute())
-                        <option value="{{ $member->id }}" @selected(old('assigned_to', $task->assigned_to) == $member->id)>
-                            {{ $member->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+            @if ($project->roleFor(auth()->user())?->canAssignTasks())
+                <fieldset>
+                    <legend class="block text-sm font-medium">Assign to</legend>
+                    <div class="mt-1 space-y-1">
+                        @foreach ($project->members as $member)
+                            @continue(!\App\Enums\ProjectRole::from($member->pivot->role)->canContribute())
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" name="assignees[]" value="{{ $member->id }}"
+                                       class="rounded border-gray-300"
+                                       @checked(in_array($member->id, (array) old('assignees', [])))>
+                                {{ $member->name }}
+                            </label>
+                        @endforeach
+                    </div>
+                </fieldset>
+            @endif
 
             <div>
                 <label for="status" class="block text-sm font-medium">Status</label>
