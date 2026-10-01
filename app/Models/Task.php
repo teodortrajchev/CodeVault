@@ -36,4 +36,8 @@ class Task extends Model
     {
         return ['due_date', 'assigned_to'];
     }
+     public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
 }

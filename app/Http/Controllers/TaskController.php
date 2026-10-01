@@ -105,12 +105,13 @@ class TaskController extends Controller
     }
 
  
-    public function show(Request $request, Project $project)
+        public function show(Request $request, Project $project, Task $task)
     {
         abort_unless($project->roleFor($request->user()), 403);
+        abort_unless($task->project_id === $project->id, 404);
 
-        $project->load('members', 'tasks');
+        $task->load('assignedUser');
 
-        return view('projects.show', compact('project'));
+        return view('tasks.show', compact('project', 'task'));
     }
 }

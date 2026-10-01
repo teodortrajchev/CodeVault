@@ -25,7 +25,7 @@
                     $statusRank = $task->status === 'in_progress' ? 2 : 1;
                 @endphp
                 <tr class="border-b">
-                    <td class="py-2 {{ $showComplete ? '' : 'text-gray-400 line-through' }}">{{ $task->name }}</td>
+                    <td class="py-2 {{ $showComplete ? '' : 'text-gray-400 line-through' }}"><a href="{{ route('projects.tasks.show', [$project, $task]) }}" class="text-blue-600 hover:underline"> {{ $task->name }}</a> </td>
                     @if ($showStatus)
                         <td class="py-2" data-sort="{{ $statusRank }}">{{ str($task->status)->headline() }}</td>
                     @endif

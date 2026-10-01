@@ -56,6 +56,7 @@
                 </div>
             </div>
 
+            @include('messages._board', ['project' => $project])
             @php
     $actorRole = $project->roleFor(auth()->user());
     $canManage = $actorRole?->canManage() ?? false;

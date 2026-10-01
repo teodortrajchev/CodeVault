@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectInvitationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MessageController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,6 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('projects', ProjectController::class)->only(['index', 'create', 'store', 'show']);
 
     Route::get('/projects/{project}/tasks/create', [TaskController::class, 'create'])->name('projects.tasks.create');
+    Route::get('/projects/{project}/tasks/{task}', [TaskController::class, 'show'])->name('projects.tasks.show');
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
     Route::get('/projects/{project}/tasks/{task}/edit', [TaskController::class, 'edit'])->name('projects.tasks.edit');
     Route::put('/projects/{project}/tasks/{task}', [TaskController::class, 'update'])->name('projects.tasks.update');
@@ -36,6 +38,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/projects/{project}/invitations/{invitation}', [ProjectInvitationController::class, 'destroy'])->name('projects.invitations.destroy');
     Route::get('/invitations/{token}', [ProjectInvitationController::class, 'show'])->name('invitations.show');
     Route::post('/invitations/{token}/accept', [ProjectInvitationController::class, 'accept'])->name('invitations.accept');
-});
+
+    // Messages
+
+    Route::get('/projects/{project}/messages', [MessageController::class, 'index'])->name('projects.messages.index');
+    Route::post('/projects/{project}/messages', [MessageController::class, 'store'])->name('projects.messages.store');
+    Route::delete('/projects/{project}/messages/{message}', [MessageController::class, 'destroy'])->name('projects.messages.destroy');
+
+    Route::get('/projects/{project}/tasks/{task}/messages', [MessageController::class, 'index'])->name('projects.tasks.messages.index');
+    Route::post('/projects/{project}/tasks/{task}/messages', [MessageController::class, 'store'])->name('projects.tasks.messages.store');
+    Route::delete('/projects/{project}/tasks/{task}/messages/{message}', [MessageController::class, 'destroy'])->name('projects.tasks.messages.destroy');
+    });
 
 require __DIR__.'/auth.php';
