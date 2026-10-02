@@ -1,13 +1,25 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ $project->name }}
             </h2>
 
-            <a href="{{ route('projects.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
-                {{ __('Back to Projects') }}
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('projects.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
+                    {{ __('Back to Projects') }}
+                </a>
+
+                    @if ($project->roleFor(auth()->user())?->canDeleteProject())
+                    <x-confirm-delete
+                        :action="route('projects.destroy', $project)"
+                        title="Delete this project?"
+                        :message="'“' . $project->name . '” and all of its tasks, messages and members will be permanently deleted. This cannot be undone.'"
+                        confirm="Delete project">
+                        {{ __('Delete project') }}
+                    </x-confirm-delete>
+                @endif
+            </div>
         </div>
     </x-slot>
 

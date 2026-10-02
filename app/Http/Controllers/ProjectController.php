@@ -42,15 +42,28 @@ class ProjectController extends Controller
     }
 
     public function show(Request $request, Project $project)
-{
-    abort_unless($project->roleFor($request->user()), 403);
+    {
+        abort_unless($project->roleFor($request->user()), 403);
 
-    $project->load('members', 'tasks.assignees');
-    $invitations = $project->roleFor($request->user())->canManage()
-        ? $project->invitations()->pending()->latest()->get()
-        : collect();
+        $project->load('members', 'tasks.assignees');
+        $invitations = $project->roleFor($request->user())->canManage()
+            ? $project->invitations()->pending()->latest()->get()
+            : collect();
 
-    return view('projects.show', compact('project', 'invitations'));
-}
+        return view('projects.show', compact('project', 'invitations'));
+    }
+
+    public function destroy(Request $request, Project $project)
+    {
+        abort_unless($project->roleFor($request->user())?->canDeleteProject(), 403);
+
+        $name = $project->name;
+
+        $project->delete();
+
+        return redirect()
+            ->route('projects.index')
+            ->with('status', "Project \"{$name}\" was deleted.");
+    }
 }
 ?>
