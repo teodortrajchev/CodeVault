@@ -106,6 +106,65 @@ class TaskController extends Controller
             ->route('projects.show', $project)
             ->with('status', 'Task updated.');
     }
+    public function updateStatus(Request $request, Project $project, Task $task)
+    {
+        $role = $project->roleFor($request->user());
+
+        if (!$role?->canContribute()) {
+            return response()->json([
+                'message' => 'You are not allowed to update tasks in this project.'
+            ], 403);
+        }
+
+        if ($task->project_id !== $project->id) {
+            return response()->json([
+                'message' => 'Task does not belong to this project.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:todo,in_progress,completed'],
+        ]);
+
+        $task->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'status' => $task->status,
+        ]);
+    }
+
+    public function updateDueDate(Request $request, Project $project, Task $task)
+    {
+        $role = $project->roleFor($request->user());
+
+        if (!$role?->canContribute()) {
+            return response()->json([
+                'message' => 'You are not allowed to update tasks in this project.'
+            ], 403);
+        }
+
+        if ($task->project_id !== $project->id) {
+            return response()->json([
+                'message' => 'Task does not belong to this project.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'due_date' => ['nullable', 'date'],
+        ]);
+
+        $task->update([
+            'due_date' => $validated['due_date'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'due_date' => $task->due_date?->format('Y-m-d'),
+        ]);
+    }
 
     public function destroy(Request $request, Project $project, Task $task)
     {
