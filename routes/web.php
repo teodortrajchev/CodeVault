@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('projects', ProjectController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     
+    Route::patch('/projects/{project}/status', [ProjectController::class, 'updateStatus'])->name('projects.status.update');
+
     Route::get('/projects/{project}/tasks/create', [TaskController::class, 'create'])->name('projects.tasks.create');
     Route::get('/projects/{project}/tasks/{task}', [TaskController::class, 'show'])->name('projects.tasks.show');
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');

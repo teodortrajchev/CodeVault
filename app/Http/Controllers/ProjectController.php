@@ -53,6 +53,23 @@ class ProjectController extends Controller
         return view('projects.show', compact('project', 'invitations'));
     }
 
+        public function updateStatus(Request $request, Project $project)
+        {
+            abort_unless($project->roleFor($request->user())?->canManage(), 403);
+
+            $data = $request->validate([
+                'status' => ['required', 'string', 'in:active,completed'],
+            ]);
+
+            $project->update($data);
+
+            return redirect()
+                ->route('projects.show', $project)
+                ->with('status', $data['status'] === 'completed'
+                    ? 'Project marked as finished.'
+                    : 'Project reopened.');
+        }
+
     public function destroy(Request $request, Project $project)
     {
         abort_unless($project->roleFor($request->user())?->canDeleteProject(), 403);

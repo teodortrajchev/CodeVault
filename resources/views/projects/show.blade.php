@@ -10,6 +10,24 @@
                     {{ __('Back to Projects') }}
                 </a>
 
+                    @if ($project->roleFor(auth()->user())?->canManage())
+                    <form method="POST" action="{{ route('projects.status.update', $project) }}">
+                        @csrf
+                        @method('PATCH')
+
+                        @if ($project->status === 'completed')
+                            <input type="hidden" name="status" value="active">
+                            <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-800">
+                                {{ __('Reopen project') }}
+                            </button>
+                        @else
+                            <input type="hidden" name="status" value="completed">
+                            <button type="submit" class="text-sm text-green-600 hover:text-green-800">
+                                {{ __('Mark as finished') }}
+                            </button>
+                        @endif
+                    </form>
+                @endif
                     @if ($project->roleFor(auth()->user())?->canDeleteProject())
                     <x-confirm-delete
                         :action="route('projects.destroy', $project)"
